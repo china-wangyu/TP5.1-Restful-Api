@@ -1,4 +1,6 @@
 # TP5.1 Restful  Api
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D7.2-8892BF.svg)](http://www.php.net/)
+[![License](https://poser.pugx.org/topthink/framework/license)](https://packagist.org/packages/topthink/framework)
 
 #### 介绍
 PHP7.2 + TP5.1  + Restful  Api  ，构建的API项目架构，支持API文档输出、API接口自检、开启API JWT模式、反射路由模式、API参数自检等功能
