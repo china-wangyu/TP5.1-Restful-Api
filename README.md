@@ -453,6 +453,11 @@ public function read()
     {项目目录}/API Command Logs{年-月-日 时}.md
     ```
 
+#### 接口文档样例
+
+详情请点击 【[接口示例文档.md](https://gitee.com/china_wangyu/TP5.1-Restful-Api/blob/master/接口示例文档.md)】查看效果。
+
+> 本来想写成json格式的，后面想想还是这个makdown文档最为方便，希望大家喜欢。
 
 
 #### 项目自评
