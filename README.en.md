@@ -5,6 +5,11 @@
 #### 介绍
 PHP7.2 + TP5.1  + Restful  Api  ，构建的API项目架构，支持API文档输出、API接口自检、开启API JWT模式、反射路由模式、API参数自检等功能
 
+为了本项目拥有更加直白与客观的简易性、阅读性、实用性，所用的扩展和第三方代码，均未考虑高度抽象和深度封装，各位大大可以很简单的看懂源码和框架设计。
+
+如果有需要或涉及到高并发的服务架构，可以在issues提出，或者留言也行，我将参考大家的意愿，出一个版本或demo。
+
+
 #### 软件架构
 软件架构说明
 ```text
@@ -152,7 +157,8 @@ composer update
         }
     }
     ```
- 3. 修改`token.php`(不建议修改)
+
+3. 修改`token.php`(不建议修改)
  
     ```php
     <?php
@@ -205,7 +211,248 @@ composer update
         }
     }
     ```
+
+##### API接口编码模板
+
+- `auth`文件举例
+
+    > 代码模板
+
+    ```php
+    <?php
+
+    namespace app\api\controller\v1;
+
+    /**
+     * Class Auth Auth授权类
+     * @package app\api\controller\v1
+     */
+    class Auth extends Api
+    {
+
+        /**
+        * @doc 获取服务器授权1
+        * @route /api/v1/auth get
+        * @param string $appSecret 授权字符 require|alphaNum 1
+        * @param string $appSec2t 授权字符1 require|alphaNum 1
+        * @param string $appId 开发者ID
+        * @success {"code":400,"msg":"appSecret不能为空","data":[]}
+        * @error {"code":400,"msg":"appSecret不能为空","data":[]}
+        */
+        public function read()
+        {
+            return $this->success('成功~');
+        }
+    }
+    ```
+
+    > 接口类注释说明
+
+    ```php
+    /**
+     * Class Auth Auth授权类
+     * @package app\api\controller\v1
+     */
+    class Auth extends Api
+    ```
+
+    > 接口方法注释
+
+    ```php
+    /**
+     * @doc 获取服务器授权1
+     * @route /api/v1/auth get
+     * @param string $appSecret 授权字符 require|alphaNum 1
+     * @param string $appSec2t 授权字符1 require|alphaNum 1
+     * @param string $appId 开发者ID
+     * @success {"code":400,"msg":"appSecret不能为空","data":[]}
+     * @error {"code":400,"msg":"appSecret不能为空","data":[]}
+     */
+    public function read()
+    {
+        return $this->success('成功~');
+    }
+    ```
+
+    > 接口方法注释参数说明
+
+    | @ 名称 | 参数1注解 | 参数2注解 | 参数3注解 |
+    | :----: | :----: | :----: | :----: |
+    | doc  | API接口文档 | |  |
+    | route  | API路由规则 | 请求类型 |  |
+    | param  | api参数 | 验证规则 | 默认值 |
+    | success  | API请求成功返回json示例 |  |  |
+    | error  | API请求失败返回json示例 |  |  |
+
+##### 接受接口请求数据
+
+- url 请求样例
+
+```bash
+http://127.0.0.1:8000/api/v1/auth?appSecret=12&appSec2t=12
+```
+
+- 代码样例
+
+```php
+public function read()
+{
+    # $this->param 就是接口请求数据，包含请求版本号，请求接口类名称
+    return $this->success('成功~',$this->param);
+}
+
+```
+
+- 返回样例
+
+```json
+    {
+    "responseCode": 200,
+    "responseMsg": "成功~",
+    "responseData": {
+        "appSecret": "12",
+        "appSec2t": "12",
+        "version": "v1",
+        "controller": "auth"
+        }
+    }
+    ```
+
+##### 返回`json`数据
+
+> 注意本函数与 `TP` 内置 `think\Controller` 的 `success\errror`同名
+
+- 状态为`200`的 样例
+
+    ```php
+    public function read()
+    {
+        return $this->success('成功~');
+    }
+    ```
+
+    ```json
+    {
+    "responseCode": 200,
+    "responseMsg": "成功~",
+    "responseData": {
+        "appSecret": "12",
+        "appSec2t": "12",
+        "version": "v1",
+        "controller": "auth"
+        }
+    }
+    ```
+
+- 状态为`400`的 样例
+
+    ```php
+    public function read()
+    {
+        return $this->error('成功~');
+    }
+    ```
+
+    ```json
+    {
+    "responseCode": 400,
+    "responseMsg": "参数错误：appSecret不能为空",
+    "responseData": []
+    }
+    ```
+
+- `success/error`函数参数说明
+
+    | 参数名称 | 注解 | 类型 | 默认值 |
+    | :----: | :----: | :----: | :----: |
+    | msg  | 接口调用提示 | |  |
+    | data  | 返回数据 | 请求类型 |  |
+
+
+
+
+##### 输出API文档
+
+1. 打开`cmd/ssh`工具
+
+2. 进入`项目目录`
+
+3. 执行命令
+
+    ```bash
+    wy@DESKTOP-2G0M7DJ MINGW64 ~/Desktop/TP5.1-Restful-Api (master)
+    $ php think API -M 1
+    |- --------------------------------------------------------------创建API文档 START-------------------------------------------------------------- -|
+    |- 创建的 API 文档路径：C:\Users\wy\Desktop\TP5.1-Restful-Api\/API接口文档2019-04-05 10.md -|
+    |- --------------------------------------------------------------创建API文档 END-------------------------------------------------------------- -|
+    ```
+##### 自检API接口
+
+1. 打开`cmd/ssh`工具
+
+2. 进入`项目目录`
+
+3. 开启接口服务
+
+    - 使用PHP内置服务器
+    ~~~bash
+    php -S {IP地址}:{端口} -t {项目目录}/public/
+    ~~~
+    - TP5 启动服务
+    ```bash
+    > php think run -H {IP地址} -P {端口}
     
+    ThinkPHP Development server is started On <http://127.0.0.1:8000/>
+    You can exit with `CTRL-C`
+    Document root is: E:\VirtualBox\vms\CICD\labs\tp5restfulapi_architecture\public
+    ```
+4. 然后配置项目 `api.php` 配置文件的参数 `（可选）`
+
+~~~php
+'API_HOST'=> 'http://127.0.0.1:8000',# 设置API网址
+~~~
+> 如果没有配置这个，请在执行的时候加上-H指定网址
+
+5. 输入自检命令 **``php think API -C 1``**
+
+    - 基本命令
+
+    ```bash
+    wy@DESKTOP-2G0M7DJ MINGW64 ~/Desktop/TP5.1-Restful-Api (master)
+    $ php think API -C 1
+    |- --------------------------------------------------------------检验API START-------------------------------------------------------------- -|
+    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read ,响应结果：{正常} 返回结果：{"responseCode":200,"responseMsg":"成功~","responseData":[]} -|
+    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read1 ,响应结果：{正常} 返回结果：{"responseCode":200,"responseMsg":"token","responseData":[]} -|
+    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read2 ,响应结果：{正常} 返回结果：{"responseCode":404,"responseMsg":"sss","responseData":[]} -|
+    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read3 ,响应结果：{正常} 返回结果：{"responseCode":404,"responseMsg":"sss","responseData":[]} -|
+    |- 正在检验 API 类：app\api\controller\v1\AuthEsac ,正在检验的函数为：read ,响应结果：{正常} 返回结果：{"responseCode":400,"responseMsg":"\u53c2\u6570\u9519\u8bef\uff1aappSecret\u4e0d\u80fd\u4
+    e3a\u7a7a","responseData":[]} -|
+    |- --------------------------------------------------------------检验API END-------------------------------------------------------------- -|
+    ```
+
+    - 指定网址 **`php think API -C 1 -H`**
+
+    ```bash
+    wy@DESKTOP-2G0M7DJ MINGW64 ~/Desktop/TP5.1-Restful-Api (master)
+    $ php think API -C 1 -H http://127.0.0.1:8000/
+    |- --------------------------------------------------------------检验API START-------------------------------------------------------------- -|
+    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read ,响应结果：{正常} 返回结果：{"responseCode":200,"responseMsg":"成功~","responseData":[]} -|
+    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read1 ,响应结果：{正常} 返回结果：{"responseCode":200,"responseMsg":"token","responseData":[]} -|
+    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read2 ,响应结果：{正常} 返回结果：{"responseCode":404,"responseMsg":"sss","responseData":[]} -|
+    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read3 ,响应结果：{正常} 返回结果：{"responseCode":404,"responseMsg":"sss","responseData":[]} -|
+    |- 正在检验 API 类：app\api\controller\v1\AuthEsac ,正在检验的函数为：read ,响应结果：{正常} 返回结果：{"responseCode":400,"responseMsg":"\u53c2\u6570\u9519\u8bef\uff1aappSecret\u4e0d\u80fd\u4
+    e3a\u7a7a","responseData":[]} -|
+    |- --------------------------------------------------------------检验API END-------------------------------------------------------------- -|
+    ```
+
+    - 如果您在`cmd/ssh 工具`感觉看着不是很方便，请在日志文件查看输出
+
+    文件地址：
+
+    ```bash
+    {项目目录}/API Command Logs{年-月-日 时}.md
+    ```
+
 
 
 #### 项目自评

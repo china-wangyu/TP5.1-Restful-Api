@@ -1,10 +1,4 @@
 <?php
-/**
- * Auth 验证授权类
- * @authors china_wangyu (china_wangyu@aliyun.com)
- * @date    2018-03-25 00:53:08
- * @version $Id$
- */
 
 namespace app\api\controller\v1;
 
@@ -26,7 +20,7 @@ class Auth extends Api
      */
     public function read()
     {
-        return $this->success('成功~');
+        return $this->success('成功~',$this->param);
     }
 
     /**
