@@ -306,17 +306,17 @@ public function read()
 - 返回样例
 
 ```json
-    {
-    "responseCode": 200,
-    "responseMsg": "成功~",
-    "responseData": {
-        "appSecret": "12",
-        "appSec2t": "12",
-        "version": "v1",
-        "controller": "auth"
-        }
+{
+"responseCode": 200,
+"responseMsg": "成功~",
+"responseData": {
+    "appSecret": "12",
+    "appSec2t": "12",
+    "version": "v1",
+    "controller": "auth"
     }
-    ```
+}
+```
 
 ##### 返回`json`数据
 
