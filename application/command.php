@@ -10,5 +10,6 @@
 // +----------------------------------------------------------------------
 
 return [
-    '\think\restful\ApiCommand'
+    '\think\restful\command\Make',
+    '\think\restful\command\Check',
 ];

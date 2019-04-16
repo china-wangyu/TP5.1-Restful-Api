@@ -8,3 +8,5 @@ extend/
 
 composer.lock
 API*.md
+
+.idea/

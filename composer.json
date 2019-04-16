@@ -18,7 +18,7 @@
     "require": {
         "php": ">=5.6.0",
         "topthink/framework": "5.1.*",
-        "china-wangyu/think-restful": "~0.0.2"
+        "china-wangyu/think-restful": "~0.0.3"
     },
     "autoload": {
         "psr-4": {

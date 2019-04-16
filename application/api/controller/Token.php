@@ -6,25 +6,30 @@
 namespace app\api\controller;
 
 use think\Request;
-use think\restful\{
-    ApiAuthorization,ApiReponse
-};
-class Token
+use think\restful\Base;
+use think\restful\jwt\Jwt;
+use think\restful\response\Json;
+class Token extends Base
 {
-
-    public function create(Request $request)
+    public function __construct()
     {
-        $param = $request->param();
+        parent::__construct();
+    }
+
+    public function create()
+    {
+        $param = $this->param;
         if(empty($param['userName']) or empty($param['userLoginKey'])){
-           return ApiReponse::json(404,'参数userName/userLoginKey不能为空~');
+            return Json::json(404,'参数userName/userLoginKey不能为空~');
         }
-        $token = $tokenTemplate = config('api.API_AUTHORIZATION_TOKEN');
+        $token = $tokenTemplate = $this->config['API_AUTHORIZATION_TOKEN'];
         $token['iat'] = time();
         $token['nbf'] = $token['iat']  + 10;
         $token['exp'] = $token['iat'] + 600;
-        $token['data'] = ['userName'=>$param['userName'],'userLoginKey'=>$param['userLoginKey']];
-        $jwt = ApiAuthorization::encode($token,config('api.API_AUTHORIZATION_KEY'));
-        return ApiReponse::json(200,'操作成功~',[
+        $token['data'] = ['userName'=>$param['userName'],
+            'userLoginKey'=>$param['userLoginKey']];
+        $jwt = Jwt::encode($token,$this->config['API_AUTHORIZATION_KEY']);
+        return Json::json(200,'操作成功~',[
             'jwt'=>$jwt,
             'tt'=>  $token['iat'],
             'exp' => $token['exp'],
@@ -37,10 +42,10 @@ class Token
      * @return array
      */
     public function reset(){
-        $param = request()->param();
-        if(empty($param['jwt']))return ApiReponse::json(404,'参数jwt不能为空~');
-        $jwtArr = ApiAuthorization::reset($jwt,config('api.API_AUTHORIZATION_KEY'));
-        return ApiReponse::json(200,'操作成功~',[
+        $param = $this->param;
+        if(empty($param['jwt']))return Json::json(404,'参数jwt不能为空~');
+        $jwtArr = Jwt::reset($jwt,$this->config['API_AUTHORIZATION_KEY']);
+        return Json::json(200,'操作成功~',[
             'jwt'=> $jwtArr['jwt'],
             'tt'=>  $jwtArr['jwt']['iat'],
             'exp' => $jwtArr['jwt']['exp'],

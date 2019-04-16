@@ -6,7 +6,7 @@ namespace app\api\controller\v1;
  * Class AuthEsac AuthEsac授权类
  * @package app\api\controller\v1
  */
-class AuthEsac extends Api
+class AuthEsac extends Base
 {
 
     /**

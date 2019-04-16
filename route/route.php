@@ -9,7 +9,7 @@
 // | Author: liu21st <liu21st@gmail.com>
 // +----------------------------------------------------------------------
 
-\think\restful\ApiRoute::registerApiMode('api');
+\think\restful\route\Route::register('api');
 return [
 
 ];

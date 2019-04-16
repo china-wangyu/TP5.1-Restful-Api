@@ -6,7 +6,7 @@ namespace app\api\controller\v1;
  * Class Auth Auth授权类
  * @package app\api\controller\v1
  */
-class Auth extends Api
+class Auth extends Base
 {
 
     /**

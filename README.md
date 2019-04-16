@@ -4,7 +4,7 @@
 [![star](https://gitee.com/china_wangyu/TP5.1-Restful-Api/badge/star.svg?theme=dark)](https://gitee.com/china_wangyu/TP5.1-Restful-Api/stargazers)
 [![fork](https://gitee.com/china_wangyu/TP5.1-Restful-Api/badge/fork.svg?theme=dark)](https://gitee.com/china_wangyu/TP5.1-Restful-Api/members)
 
-#### 介绍
+# 介绍
 PHP7.2 + TP5.1  + Restful  Api  ，构建的API项目架构，支持API文档输出、API接口自检、开启API JWT模式、反射路由模式、API参数自检等功能
 
 为了本项目拥有更加直白与客观的简易性、阅读性、实用性，所用的扩展和第三方代码，均未考虑高度抽象和深度封装，各位大大可以很简单的看懂源码和框架设计。
@@ -12,7 +12,7 @@ PHP7.2 + TP5.1  + Restful  Api  ，构建的API项目架构，支持API文档输
 如果有需要或涉及到高并发的服务架构，可以在issues提出，或者留言也行，我将参考大家的意愿，出一个版本或demo。
 
 
-#### 软件架构
+# 软件架构
 软件架构说明
 ```text
 www  WEB部署目录（或者子目录）
@@ -76,7 +76,7 @@ www  WEB部署目录（或者子目录）
 ├─think                 命令行入口文件
 ```
 
-#### 安装教程
+# 安装教程
 
 
 1. 克隆本项目代码
@@ -99,9 +99,9 @@ cd TP5.1-Restful-Api
 composer update
 ```
 
-#### 使用说明
+# 使用说明
 
-##### 必须配置以下内容
+## 必须配置以下内容
 
 1. 配置`api.php` 与`app.php`
 
@@ -115,16 +115,16 @@ composer update
 
 > 如果不修改模块，请直接使用默认配置
 
-##### 开启JWT模式 （可选）
+## 开启JWT模式 （可选）
 
 1. 配置`api.php`
 
-   ```php
+   ```
    // 是否开启授权验证
    'API_AUTHORIZATION' => true,
     ```
     
-2. 修改`Api.php`项目基类(不建议修改)
+2. 修改`Base.php`项目基类(不建议修改)
 
     ```php
    <?php
@@ -134,23 +134,35 @@ composer update
     
     namespace app\api\controller\v1;
     
-    use think\restful\ApiAuthorization;
-    
+    use think\restful\jwt\Jwt;
+
     /**
-     * Class Api API基类
+     * Class Reflex API基类
      * @package app\api\controller\v1
      */
-    class Api extends \think\restful\Api
+    class Base extends \think\restful\Api
     {
+        /**
+         * Base constructor. 有什么事要在父类执行之后执行的代码，请写在parent::__construct($debug);下
+         * @param bool $debug
+         */
+        public function __construct($debug = false)
+        {
+            parent::__construct($debug);
+        }
+    
+        /**
+         * 继承父类方法，如果有什么要在最开始执行的，请写在里面
+         */
         protected function handle()
         {
-            if (config('api.API_AUTHORIZATION')){
+            if ($this->config['API_AUTHORIZATION']){
                 // 开启JWT验证,执行业务代码
                 if(!isset($this->param['jwt']) or !isset($this->param['signature'])) {
                     // 没有jwt参数 或 signature 签名
                     $this->error('400 缺少API授权信息~');
                 }
-                $jwtArr = ApiAuthorization::decode($this->param['jwt'],config('api.API_AUTHORIZATION_KEY'));
+                $jwtArr = Jwt::decode($this->param['jwt'],$this->config['API_AUTHORIZATION_KEY']);
                 $userJwtSignature = md5(join(',',$jwtArr['data']));
                 if ($userJwtSignature !== $this->param['signature']) {
                     $this->error('400 API授权信息错误~');
@@ -171,24 +183,30 @@ composer update
     namespace app\api\controller;
     
     use think\Request;
-    use think\restful\ApiAuthorization;
-    use think\restful\ApiReponse;
-    class Token
+    use think\restful\Base;
+    use think\restful\jwt\Jwt;
+    use think\restful\response\Json;
+    class Token extends Base
     {
-    
-        public function create(Request $request)
+        public function __construct()
         {
-            $param = $request->param();
+            parent::__construct();
+        }
+    
+        public function create()
+        {
+            $param = $this->param;
             if(empty($param['userName']) or empty($param['userLoginKey'])){
-               return ApiReponse::json(404,'参数userName/userLoginKey不能为空~');
+               return Json::json(404,'参数userName/userLoginKey不能为空~');
             }
-            $token = $tokenTemplate = config('api.API_AUTHORIZATION_TOKEN');
+            $token = $tokenTemplate = $this->config['API_AUTHORIZATION_TOKEN'];
             $token['iat'] = time();
             $token['nbf'] = $token['iat']  + 10;
             $token['exp'] = $token['iat'] + 600;
-            $token['data'] = ['userName'=>$param['userName'],'userLoginKey'=>$param['userLoginKey']];
-            $jwt = ApiAuthorization::encode($token,config('api.API_AUTHORIZATION_KEY'));
-            return ApiReponse::json(200,'操作成功~',[
+            $token['data'] = ['userName'=>$param['userName'],
+                'userLoginKey'=>$param['userLoginKey']];
+            $jwt = Jwt::encode($token,$this->config['API_AUTHORIZATION_KEY']);
+            return Json::json(200,'操作成功~',[
                 'jwt'=>$jwt,
                 'tt'=>  $token['iat'],
                 'exp' => $token['exp'],
@@ -201,10 +219,10 @@ composer update
          * @return array
          */
         public function reset(){
-            $param = request()->param();
-            if(empty($param['jwt']))return ApiReponse::json(404,'参数jwt不能为空~');
-            $jwtArr = ApiAuthorization::reset($jwt,config('api.API_AUTHORIZATION_KEY'));
-            return ApiReponse::json(200,'操作成功~',[
+            $param = $this->param;
+            if(empty($param['jwt']))return Json::json(404,'参数jwt不能为空~');
+            $jwtArr = Jwt::reset($jwt,$this->config['API_AUTHORIZATION_KEY']);
+            return Json::json(200,'操作成功~',[
                 'jwt'=> $jwtArr['jwt'],
                 'tt'=>  $jwtArr['jwt']['iat'],
                 'exp' => $jwtArr['jwt']['exp'],
@@ -212,9 +230,10 @@ composer update
             ]);
         }
     }
+    
     ```
 
-##### API接口编码模板
+## API接口编码模板
 
 - `auth`文件举例
 
@@ -229,7 +248,7 @@ composer update
      * Class Auth Auth授权类
      * @package app\api\controller\v1
      */
-    class Auth extends Api
+    class Auth extends Base
     {
 
         /**
@@ -255,7 +274,7 @@ composer update
      * Class Auth Auth授权类
      * @package app\api\controller\v1
      */
-    class Auth extends Api
+    class Auth extends Base
     ```
 
     > 接口方法注释
@@ -286,7 +305,7 @@ composer update
     | success  | API请求成功返回json示例 |  |  |
     | error  | API请求失败返回json示例 |  |  |
 
-##### 接受接口请求数据
+## 接受接口请求数据
 
 - url 请求样例
 
@@ -320,7 +339,7 @@ public function read()
 }
 ```
 
-##### 返回`json`数据
+## 返回`json`数据
 
 > 注意本函数与 `TP` 内置 `think\Controller` 的 `success\errror`同名
 
@@ -373,7 +392,13 @@ public function read()
 
 
 
-##### 输出API文档
+## 输出API文档
+
+0. 需要设置`api.php`的`API_AUTHORIZATION`值为`false`
+    ```
+    // 是否开启授权验证
+    'API_AUTHORIZATION' => false,
+    ```
 
 1. 打开`cmd/ssh`工具
 
@@ -381,15 +406,17 @@ public function read()
 
 3. 执行命令
 
-    ```bash
-    wy@DESKTOP-2G0M7DJ MINGW64 ~/Desktop/TP5.1-Restful-Api (master)
-    $ php think API -M 1
-    |- --------------------------------------------------------------创建API文档 START-------------------------------------------------------------- -|
-    |- 创建的 API 文档路径：C:\Users\wy\Desktop\TP5.1-Restful-Api\/API接口文档2019-04-05 10.md -|
-    |- --------------------------------------------------------------创建API文档 END-------------------------------------------------------------- -|
+    ```
+    C:\Users\zhns_\Desktop\php\TP5.1-Restful-Api [master ≡ +2 ~223 -1 !]
+    >  php think api:make
+    API markdown 接口文档地址: C:\Users\zhns_\Desktop\php\TP5.1-Restful-Api\\API接口文档2019-04-16 15.md
     ```
 ##### 自检API接口
-
+0. 需要设置`api.php`的`API_AUTHORIZATION`值为`false`
+    ```
+    // 是否开启授权验证
+    'API_AUTHORIZATION' => false,
+    ```
 1. 打开`cmd/ssh`工具
 
 2. 进入`项目目录`
@@ -401,7 +428,7 @@ public function read()
     php -S {IP地址}:{端口} -t {项目目录}/public/
     ~~~
     - TP5 启动服务
-    ```bash
+    ```
     > php think run -H {IP地址} -P {端口}
     
     ThinkPHP Development server is started On <http://127.0.0.1:8000/>
@@ -410,7 +437,7 @@ public function read()
     ```
 4. 然后配置项目 `api.php` 配置文件的参数 `（可选）`
 
-~~~php
+~~~
 'API_HOST'=> 'http://127.0.0.1:8000',# 设置API网址
 ~~~
 > 如果没有配置这个，请在执行的时候加上-H指定网址
@@ -419,63 +446,41 @@ public function read()
 
     - 基本命令
 
-    ```bash
-    wy@DESKTOP-2G0M7DJ MINGW64 ~/Desktop/TP5.1-Restful-Api (master)
-    $ php think API -C 1
-    |- --------------------------------------------------------------检验API START-------------------------------------------------------------- -|
-    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read ,响应结果：{正常} 返回结果：{"responseCode":200,"responseMsg":"成功~","responseData":[]} -|
-    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read1 ,响应结果：{正常} 返回结果：{"responseCode":200,"responseMsg":"token","responseData":[]} -|
-    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read2 ,响应结果：{正常} 返回结果：{"responseCode":404,"responseMsg":"sss","responseData":[]} -|
-    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read3 ,响应结果：{正常} 返回结果：{"responseCode":404,"responseMsg":"sss","responseData":[]} -|
-    |- 正在检验 API 类：app\api\controller\v1\AuthEsac ,正在检验的函数为：read ,响应结果：{正常} 返回结果：{"responseCode":400,"responseMsg":"\u53c2\u6570\u9519\u8bef\uff1aappSecret\u4e0d\u80fd\u4
-    e3a\u7a7a","responseData":[]} -|
-    |- --------------------------------------------------------------检验API END-------------------------------------------------------------- -|
+    ```
+    C:\Users\zhns_\Desktop\php\TP5.1-Restful-Api [master ≡ +2 ~223 -1 !]
+    >  php think api:check
+    API markdown 自检文档地址: C:\Users\zhns_\Desktop\php\TP5.1-Restful-Api\\API自检文档2019-04-16 15.md
     ```
 
     - 指定网址 **`php think API -C 1 -H`**
 
-    ```bash
-    wy@DESKTOP-2G0M7DJ MINGW64 ~/Desktop/TP5.1-Restful-Api (master)
-    $ php think API -C 1 -H http://127.0.0.1:8000/
-    |- --------------------------------------------------------------检验API START-------------------------------------------------------------- -|
-    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read ,响应结果：{正常} 返回结果：{"responseCode":200,"responseMsg":"成功~","responseData":[]} -|
-    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read1 ,响应结果：{正常} 返回结果：{"responseCode":200,"responseMsg":"token","responseData":[]} -|
-    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read2 ,响应结果：{正常} 返回结果：{"responseCode":404,"responseMsg":"sss","responseData":[]} -|
-    |- 正在检验 API 类：app\api\controller\v1\Auth ,正在检验的函数为：read3 ,响应结果：{正常} 返回结果：{"responseCode":404,"responseMsg":"sss","responseData":[]} -|
-    |- 正在检验 API 类：app\api\controller\v1\AuthEsac ,正在检验的函数为：read ,响应结果：{正常} 返回结果：{"responseCode":400,"responseMsg":"\u53c2\u6570\u9519\u8bef\uff1aappSecret\u4e0d\u80fd\u4
-    e3a\u7a7a","responseData":[]} -|
-    |- --------------------------------------------------------------检验API END-------------------------------------------------------------- -|
+    ```
+    C:\Users\zhns_\Desktop\php\TP5.1-Restful-Api [master ≡ +2 ~223 -1 !]
+    >  php think api:check -H http://127.0.0.1:8000
+    API markdown 自检文档地址: C:\Users\zhns_\Desktop\php\TP5.1-Restful-Api\\API自检文档2019-04-16 16.md
     ```
 
-    - 如果您在`cmd/ssh 工具`感觉看着不是很方便，请在日志文件查看输出
-
-    文件地址：
-
-    ```bash
-    {项目目录}/API Command Logs{年-月-日 时}.md
-    ```
-
-#### 接口文档样例
+# 接口文档样例
 
 详情请点击 【[接口示例文档.md](https://gitee.com/china_wangyu/TP5.1-Restful-Api/blob/master/接口文档样例.md)】查看效果。
 
 > 本来想写成json格式的，后面想想还是这个makdown文档最为方便，希望大家喜欢。
 
 
-#### 项目自评
+# 项目自评
 
 本扩展或者说是一个TP5.1+PHP7.2的后端项目API架构，
 主要是帮助刚刚入行或者快速建站的朋友们，进行项目快速迭代开发，
 把接口授权、接口验证、参数校验、接口文档输出、接口自验包裹封装起来，
 只为大家用的安心。
 
-#### 帮助作者
+# 帮助作者
 
 项目开发或者扩展开发，都需要不断地编码尝试与线上环境验证。
 所需的资源和时间都是有成本的，如果项目帮助到您了，
 如果您有心帮助作者,请点击下方的捐赠按钮
     
-#### 参与贡献
+# 参与贡献
 
 1. Fork 本仓库
 2. 新建 ts_{用户名} 分支
@@ -483,7 +488,7 @@ public function read()
 4. 新建 Pull Request
 
 
-#### 联系作者
+# 联系作者
 
  - 如有疑问，请联系邮箱 china_wangyu@aliyun.com
 
